@@ -1,0 +1,25 @@
+# ZND profile caches
+znd_tp_profiles/
+*.npz
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Conda / environments
+.env
+.venv/
+venv/
+
+# macOS
+.DS_Store
+
+# Local generated plots/results that have not been selected for publication
+validation_plots_*/
+znd_tp_validation_plots/
+znd_tp_nearest_neighbor_plots/
+
+# Secrets / local configuration
+*.key
+*.pem
+.env.*
