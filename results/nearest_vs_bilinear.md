@@ -4,29 +4,53 @@
 
 Compare two simple methods for retrieving an off-grid ZND solution from a regular temperature-pressure manifold at fixed stoichiometric hydrogen-air composition (φ = 1).
 
-The direct SDToolbox solution at the same off-grid state is treated as the validation truth for both methods.
+The direct SDToolbox solution at the same off-grid state is treated as the validation truth for both methods. The comparison therefore holds the manifold, requested state, direct truth solution, and profile discretization fixed while changing only the reconstruction method.
 
 ## Manifold
 
 - Temperature: 300–1000 K in 100 K increments
 - Pressure: 0.1–5.0 atm in 0.1 atm increments
+- Equivalence ratio: φ = 1.0
 - Requested states: 400
 - Successfully generated states: 399
 - Numerical hole: 400 K, 3.9 atm (CJ calculation timeout)
 
-The missing state does not affect this validation because the target lies in the 300–400 K, 0.8–0.9 atm cell.
+The missing state does not affect this validation because the target lies in the 300–400 K, 0.8–0.9 atm cell. Bilinear interpolation is performed only when all four corners of the requested T-P cell are available.
 
 ## Validation state
 
-Both methods are now verified at exactly:
+Both methods are verified at exactly:
 
 - **T₁ = 351.5 K**
 - **P₁ = 0.84 atm**
 - **φ = 1.0**
+- Common profile grid: **1200 points**
+- Species array: **9 × 1200**
 
-Nearest neighbor selects the tabulated state **400 K, 0.8 atm**.
+Both runs reuse the same independent direct-truth file:
 
-Bilinear interpolation uses the four surrounding states with the following verified weights:
+```text
+znd_tp_profiles/truth_target_T0351.50_P00.840.npz
+```
+
+The SDToolbox-generated arrays also pass the current JAX compatibility check on CPU: temperature `(1200,)`, pressure `(1200,)`, and species `(9, 1200)` arrays can be moved into JAX successfully.
+
+## Reconstruction methods
+
+### Nearest neighbor
+
+The target is bracketed by 300 and 400 K and by 0.80 and 0.90 atm. Nearest-neighbor retrieval selects:
+
+- **T = 400 K**
+- **P = 0.80 atm**
+- Temperature distance from target: **48.5 K**
+- Pressure distance from target: **0.0400 atm**
+
+This method uses that single tabulated ZND profile as the reconstruction at the requested off-grid state.
+
+### Bilinear interpolation
+
+Bilinear interpolation uses all four surrounding states with the following verified weights:
 
 | Corner | T (K) | P (atm) | Weight |
 |---|---:|---:|---:|
@@ -37,7 +61,7 @@ Bilinear interpolation uses the four surrounding states with the following verif
 
 Weight sum = **1.000**.
 
-## Profile NRMSE
+## Profile NRMSE comparison
 
 | Quantity | Nearest neighbor (%) | Bilinear (%) | Reduction vs nearest (%) |
 |---|---:|---:|---:|
@@ -52,6 +76,22 @@ Weight sum = **1.000**.
 | HO₂ | 1.2338 | 0.1444 | 88.3 |
 | H₂O₂ | 1.3267 | 0.3103 | 76.6 |
 | N₂ | 0.0000 | 0.0000 | — |
+
+## Nearest-neighbor error details
+
+| Quantity | RMSE | MAE | Max absolute error | NRMSE (%) |
+|---|---:|---:|---:|---:|
+| Temperature (K) | 12.1708 | 3.77751 | 189.215 | 0.861894 |
+| Pressure (Pa) | 204963 | 204723 | 339253 | 26.9835 |
+| H₂ | 2.58766e-04 | 1.88105e-04 | 5.72949e-03 | 0.907237 |
+| O₂ | 1.84776e-03 | 1.06082e-03 | 4.82586e-02 | 0.816316 |
+| H₂O | 3.11512e-03 | 2.74250e-03 | 4.27511e-02 | 1.43596 |
+| OH | 1.14579e-03 | 1.11208e-03 | 7.16824e-03 | 4.19620 |
+| H | 7.13191e-05 | 5.56225e-05 | 6.80424e-04 | 2.21621 |
+| O | 4.20478e-04 | 3.54893e-04 | 3.67266e-03 | 3.06890 |
+| HO₂ | 8.95845e-06 | 6.42913e-07 | 2.41055e-04 | 1.23382 |
+| H₂O₂ | 6.99203e-07 | 2.26174e-07 | 1.83453e-05 | 1.32666 |
+| N₂ | 0 | 0 | 0 | 0 |
 
 ## Bilinear error details
 
@@ -71,19 +111,23 @@ Weight sum = **1.000**.
 
 ## Interpretation
 
-This is now an apples-to-apples comparison: the same ZND manifold and the same direct SDToolbox truth state are used for both retrieval methods.
+This is an apples-to-apples comparison: the same ZND manifold, requested state, direct SDToolbox truth solution, and profile grid are used for both methods.
 
-Nearest-neighbor retrieval discards three of the four surrounding tabulated states and substitutes a single nearby profile. Bilinear interpolation uses all four surrounding states with location-based weights. At this validation point, bilinear interpolation reduces NRMSE by roughly **76–96%** for the nonzero quantities relative to nearest-neighbor retrieval.
+Nearest-neighbor retrieval discards three of the four surrounding tabulated states and substitutes a single nearby profile. Bilinear interpolation instead combines all four surrounding states according to their relative location in the T-P cell.
 
-Temperature and the reactive-species profiles are reconstructed particularly closely by bilinear interpolation. Pressure remains the largest normalized discrepancy at **3.45% NRMSE**, even though this is much smaller than the **26.98%** nearest-neighbor pressure error.
+At this validation point, bilinear interpolation reduces NRMSE by approximately **76–96%** for all quantities with nonzero error relative to nearest-neighbor retrieval.
 
-Among the species, the largest bilinear NRMSE values are H₂O₂ (**0.310%**) and H (**0.309%**); all non-inert species remain below **0.32% NRMSE** at this validation state.
+Temperature and reactive-species profiles are reconstructed particularly closely by bilinear interpolation. Temperature NRMSE decreases from **0.862% to 0.051%**. Pressure remains the largest normalized bilinear discrepancy at **3.45% NRMSE**, but this is substantially below the **26.98%** pressure NRMSE from nearest-neighbor retrieval.
+
+The largest nearest-neighbor species NRMSE values occur for OH (**4.20%**) and O (**3.07%**). With bilinear interpolation, the largest species NRMSE values are H₂O₂ (**0.310%**) and H (**0.309%**), and all non-inert species remain below **0.32% NRMSE** at this validation state.
 
 N₂ has zero profile error because the reduced FFCM2 H₂ mechanism treats N₂ as an inert diluent in this calculation; its mass-fraction profile is unchanged.
 
+The present comparison demonstrates the reconstruction error difference between the two retrieval methods at this state. It does **not** by itself establish that the remaining error is caused by reaction-front misalignment; profile alignment can be investigated separately if later validation shows localized errors around induction or reaction regions.
+
 ## Error metric
 
-For a profile f(x),
+For a profile `f(x)`,
 
 ```text
 RMSE = sqrt(mean((f_reconstructed - f_truth)^2))
@@ -91,8 +135,29 @@ RMSE = sqrt(mean((f_reconstructed - f_truth)^2))
 
 Temperature and pressure NRMSE are normalized by the range of the direct truth profile. Species NRMSE is normalized by the peak absolute mass fraction in the direct truth profile.
 
-NRMSE is a profile-level aggregate metric; it should not be interpreted as saying every individual point lies within that percentage.
+NRMSE is a profile-level aggregate metric and should not be interpreted as saying every individual point lies within that percentage.
+
+## Saved outputs
+
+### Nearest neighbor
+
+```text
+znd_nearest_neighbor_selection.csv
+znd_nearest_neighbor_error_summary.csv
+znd_nearest_neighbor_validation.npz
+znd_tp_nearest_neighbor_plots/
+```
+
+### Bilinear
+
+The bilinear run produces the corresponding interpolation weights, profile error summary, validation arrays, and profile plots for the same target state.
+
+Both methods reuse the common cached manifold under:
+
+```text
+znd_tp_profiles/
+```
 
 ## Next experiment
 
-Repeat the same direct-truth comparison at several additional off-grid T-P states distributed across the manifold. The purpose is to determine whether the strong local bilinear performance observed here persists across the broader operating space before introducing more sophisticated interpolation, compression, or ML-based representations.
+Repeat the same direct-truth comparison at several additional off-grid T-P states distributed across the manifold. The purpose is to determine whether the strong local bilinear performance observed here persists across the broader operating space before introducing more sophisticated interpolation, profile compression, or ML-based representations.
