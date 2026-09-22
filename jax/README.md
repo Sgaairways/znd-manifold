@@ -52,17 +52,17 @@ Across the nine off-grid validation states, the maximum observed JAX-SciPy discr
 
 | Quantity | Maximum absolute JAX-SciPy difference |
 |---|---:|
-| Pressure | (1.86	imes10^{-9}) Pa |
-| Temperature | (9.09	imes10^{-13}) K |
-| H2O | (5.55	imes10^{-17}) mass fraction |
-| O2 | (2.78	imes10^{-17}) mass fraction |
-| H2 | (6.94	imes10^{-18}) mass fraction |
-| OH | (6.94	imes10^{-18}) mass fraction |
-| O | (6.94	imes10^{-18}) mass fraction |
-| H | (8.67	imes10^{-19}) mass fraction |
-| HO2 | (2.17	imes10^{-19}) mass fraction |
-| H2O2 | (1.36	imes10^{-20}) mass fraction |
-| N2 | 0 |
+| Pressure | `1.86e-9 Pa` |
+| Temperature | `9.09e-13 K` |
+| H2O | `5.55e-17` mass fraction |
+| O2 | `2.78e-17` mass fraction |
+| H2 | `6.94e-18` mass fraction |
+| OH | `6.94e-18` mass fraction |
+| O | `6.94e-18` mass fraction |
+| H | `8.67e-19` mass fraction |
+| HO2 | `2.17e-19` mass fraction |
+| H2O2 | `1.36e-20` mass fraction |
+| N2 | `0` |
 
 These differences are numerical roundoff. The JAX implementation therefore reproduces the established SciPy bilinear calculation to numerical precision.
 
