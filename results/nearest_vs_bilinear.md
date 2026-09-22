@@ -158,6 +158,26 @@ Both methods reuse the common cached manifold under:
 znd_tp_profiles/
 ```
 
+## Completed follow-up: multi-point off-grid validation
+
+The proposed broader validation has now been completed. Bilinear interpolation was evaluated at **9 additional off-grid T-P states** distributed across the manifold using three temperatures (351.5, 651.5, and 951.5 K) and three pressures (0.84, 2.54, and 4.64 atm).
+
+At each state, the reconstructed temperature, pressure, and species profiles were compared against an independently calculated SDToolbox ZND solution.
+
+Across the nine validation cases:
+
+- Mean temperature NRMSE: **0.114%**
+- Mean pressure NRMSE: **1.670%**
+- Mean H2 NRMSE: **0.146%**
+- Mean OH NRMSE: **0.159%**
+- Mean NRMSE for every species remained below **0.41%**
+- Maximum pressure NRMSE: **3.455%**
+- The largest profile errors generally occurred in the lower-temperature validation cases.
+
+These results extend the original single-state comparison and indicate that the strong bilinear reconstruction performance persists across the tested off-grid operating conditions. The nine-point study is documented in [the multi-point validation report](../validation/bilinear_multipoint_validation.md).
+
 ## Next experiment
 
-Repeat the same direct-truth comparison at several additional off-grid T-P states distributed across the manifold. The purpose is to determine whether the strong local bilinear performance observed here persists across the broader operating space before introducing more sophisticated interpolation, profile compression, or ML-based representations.
+Move the validated manifold lookup and bilinear profile reconstruction into a **JAX-oriented framework**. The immediate goal is to reproduce the existing interpolation results in JAX while preserving the current SDToolbox-generated manifold and direct-truth validation baseline.
+
+This provides a foundation for fast and vectorized ZND profile queries for eventual coupling to the downstream **RDE heat-transfer solver**. Once the JAX baseline is verified, later work can investigate profile compression, differentiable optimization, and ML-based representations without losing the simple bilinear benchmark.
