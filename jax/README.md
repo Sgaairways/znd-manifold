@@ -128,21 +128,15 @@ The end goal is not merely to accelerate one interpolation call. The manifold is
 
 The desired architecture is:
 
-[
-	ext{SDToolbox (offline)}
-ightarrow
-	ext{precomputed ZND manifold}
-ightarrow
-	ext{JAX profile lookup}
-ightarrow
-T(x),p(x),Y_i(x)
-ightarrow
-	ext{thermal BCs}
-ightarrow
-	ext{heat-transfer / cooling model}
-ightarrow
-	ext{design optimization}.
-]
+```text
+SDToolbox (offline)
+    → precomputed ZND manifold
+    → JAX profile lookup
+    → T(x), p(x), Y_i(x)
+    → thermal boundary conditions
+    → heat-transfer / cooling model
+    → design optimization
+```
 
 JAX provides a path toward JIT compilation, vectorized/batched profile queries, accelerator-compatible array operations, and eventually differentiable model components.
 
